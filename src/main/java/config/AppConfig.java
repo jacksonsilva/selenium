@@ -32,13 +32,21 @@ public class AppConfig {
 			if (nextEvent.isStartElement()) {
 				StartElement startElement = nextEvent.asStartElement();
 				switch (startElement.getName().getLocalPart()) {
+				case "chrome_drive":
+					nextEvent = reader.nextEvent();
+					config.setChromeDrive(nextEvent.asCharacters().getData());
+					break;
 				case "directory_path":
 					nextEvent = reader.nextEvent();
 					config.setDirectoryPath(nextEvent.asCharacters().getData());
 					break;
-				case "fileName":
+				case "templateJuridica":
 					nextEvent = reader.nextEvent();
-					config.setFileName(nextEvent.asCharacters().getData());
+					config.setTemplateJuridica(nextEvent.asCharacters().getData());
+					break;
+				case "templateFisica":
+					nextEvent = reader.nextEvent();
+					config.setTemplateFisica(nextEvent.asCharacters().getData());
 					break;
 				case "output_directory":
 					nextEvent = reader.nextEvent();

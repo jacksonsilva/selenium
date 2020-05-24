@@ -1,6 +1,8 @@
 package webscrapping;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.Date;
@@ -13,6 +15,7 @@ import java.util.regex.Pattern;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.text.MaskFormatter;
+import javax.xml.stream.XMLStreamException;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.OutputType;
@@ -28,40 +31,77 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import config.AppConfig;
+import config.model.Config;
 import poi.ReadWordTemplate;
 
 public class WebScrapping {
 
 	private Logger logger = LoggerFactory.getLogger(WebScrapping.class);
-	
+
 	int WAIT_DEFAULT = 30; // Em segundos;
 	WebDriver driver = new ChromeDriver();
-	
+
 	WebDriverWait wait = new WebDriverWait(this.driver, Duration.ofSeconds(WAIT_DEFAULT));
 	ReadWordTemplate read = new ReadWordTemplate();
 
+	static Config config;
+
 	public static void main(String[] args) {
 
-		System.setProperty("webdriver.chrome.driver", "C:\\rb_process\\chromedriver.exe");
+		try {
+			// opt.addArguments("--disable-gpu");
+
+			config = readConfigFile();
+			// Initialize browser
+			WebScrapping webScrapping = new WebScrapping();
+			webScrapping.init();
+		} catch (Exception e) {
+			JOptionPane optionPane = new JOptionPane(e.getMessage(), JOptionPane.ERROR_MESSAGE);
+			JDialog dialog = optionPane.createDialog("Erro!");
+			dialog.setAlwaysOnTop(true);
+			dialog.setVisible(true);
+		}
+
+	}
+
+	private static Config readConfigFile() throws FileNotFoundException, XMLStreamException {
+
+		File fileConfig = new File("./config.xml");
+
+		AppConfig appConfig = new AppConfig(new FileInputStream(fileConfig));
+		// AppConfig appConfig = new
+		// AppConfig(ReadWordTemplate.class.getResourceAsStream("config.xml"));
+
+		Config config = appConfig.getConfig();
+
+		System.setProperty("webdriver.chrome.driver", config.getChromeDrive());
 		ChromeOptions opt = new ChromeOptions();
 		opt.setPageLoadStrategy(PageLoadStrategy.NORMAL);
-		//opt.addArguments("--disable-gpu");
-		
-		// Initialize browser
-		WebScrapping webScrapping = new WebScrapping();
-		webScrapping.init();
+
+		return config;
 
 	}
 
 	public void init() {
-		
-		SimpleDateFormat sdf = new SimpleDateFormat("ddMMyyyy hhmmss");
-		logger.info("Iniciando processo: [" + sdf.format(new Date()) +"]");
-		
-		Map<ReadWordTemplate.TEMPLATE_WORD_VARIABLES, String> values = new HashMap<>();
+
+		String outputDirectory;
+		StringBuilder fullPathDocumentTemplate;
 
 		try {
-			//driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+
+			MaskFormatter maskCpf = new MaskFormatter("###.###.###-##");
+			MaskFormatter maskCnpj = new MaskFormatter("###.###.###/####-##");
+
+			// Config config = readConfigFile();
+			outputDirectory = config.getOutputDirectory();
+
+			SimpleDateFormat sdf = new SimpleDateFormat("ddMMyyyy hhmmss");
+			logger.info("Iniciando processo: [" + sdf.format(new Date()) + "]");
+
+			Map<ReadWordTemplate.TEMPLATE_WORD_VARIABLES, String> values = new HashMap<>();
+
+			// driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 			driver.get("http://linkservidor.com/credg5.aspx");
 
 			WebElement username = getWebElementOfId("ctl00_PageContent_UserName");
@@ -69,20 +109,13 @@ public class WebScrapping {
 			WebElement buttonOkToLogin = getWebElementOfId("ctl00_PageContent_OKButton__Button");
 
 			username.sendKeys("usuario");
-			password.sendKeys("senha");
+			password.sendKeys("password");
 
 			buttonOkToLogin.click();
 
-			// WebElement menuPropostas =
-			// driver.findElement(By.xpath("//*[@id=\"ctl00__Menu_MultiLevelMenun0\"]/table/tbody/tr/td/a"));
-			// WebElement menuPesquisar =
-			// driver.findElement(By.xpath("/html/body/form/table/tbody/tr[2]/td[2]/table/tbody/tr[2]/td[3]/table/tbody/tr/td[1]/table/tbody/tr/td[2]/div/table/tbody/tr[1]/td/table/tbody/tr/td/a"));
-			// menuPesquisar.click();
-			
 			String url = driver.getCurrentUrl();
-			
-			String IPADDRESS_PATTERN = 
-			        "(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\:([0-9]{2,5})";
+
+			String IPADDRESS_PATTERN = "(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\:([0-9]{2,5})";
 
 			Pattern pattern = Pattern.compile(IPADDRESS_PATTERN);
 			Matcher matcher = pattern.matcher(url);
@@ -90,7 +123,7 @@ public class WebScrapping {
 			if (matcher.find()) {
 				ipFinal = matcher.group();
 			}
-			
+
 			String urlPesquisaContato = "http://" + ipFinal + "/Comercial/PesquisaContato.aspx";
 			driver.navigate().to(urlPesquisaContato);
 			this.wait = new WebDriverWait(driver, Duration.ofSeconds(WAIT_DEFAULT));
@@ -99,21 +132,20 @@ public class WebScrapping {
 			buttonIr.click();
 
 			Thread.sleep(5000);
-			//WebElement tabelaCondominio = this.wait.until(ExpectedConditions.presenceOfElementLocated(By.id("PesquisaContatoTableControlGrid")));
 			WebElement tabelaCondominio = getWebElementOfId("PesquisaContatoTableControlGrid");
-			
-			List<WebElement> elementosTabelasContatos = tabelaCondominio.findElements(By.xpath("//*[@id=\"PesquisaContatoTableControlGrid\"]/tbody/tr"));
-			
+
+			List<WebElement> elementosTabelasContatos = tabelaCondominio
+					.findElements(By.xpath("//*[@id=\"PesquisaContatoTableControlGrid\"]/tbody/tr"));
+
 			int xContatos = elementosTabelasContatos.size();
 
 			for (int i = 1; i <= xContatos; i++) {
-								
 				if (i > 1) {
 					driver.navigate().to(urlPesquisaContato);
 					buttonIr = getWebElementOfId("ctl00_PageContent_SearchButton1__Button");
 					buttonIr.click();
 				}
-				
+
 				WebElement buttonVisualizarComercial;
 				if (xContatos > 1) {
 					buttonVisualizarComercial = getWebElementOfXPath(
@@ -139,7 +171,6 @@ public class WebScrapping {
 				String cnpj = getStringOfXPath(tableOfCondominio,
 						"/html/body/form/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td[3]/div[1]/div[2]/table/tbody/tr[1]/td/div/div/table/tbody/tr[3]/td[2]/div/table/tbody/tr/td/div/table/tbody/tr[4]/td[2]");
 
-				MaskFormatter maskCnpj = new MaskFormatter("###.###.###/####-##");
 				maskCnpj.setValueContainsLiteralCharacters(false);
 				values.put(ReadWordTemplate.TEMPLATE_WORD_VARIABLES.CNPJ, maskCnpj.valueToString(cnpj));
 
@@ -158,17 +189,42 @@ public class WebScrapping {
 						.append(" ").append(ufCondominio).toString();
 				values.put(ReadWordTemplate.TEMPLATE_WORD_VARIABLES.ENDERECO_CONDOMINIO, fullAddress);
 
-				String cpfRepresentante = getStringOfXPath(tableOfCondominio,
+				String documentoRepresentante = getStringOfXPath(tableOfCondominio,
 						"/html/body/form/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td[3]/div[1]/div[2]/table/tbody/tr[1]/td/div/div/table/tbody/tr[3]/td[2]/div/table/tbody/tr/td/div/table/tbody/tr[10]/td[2]");
 
-				MaskFormatter maskCpf = new MaskFormatter("###.###.###-##");
-				maskCpf.setValueContainsLiteralCharacters(false);
-				values.put(ReadWordTemplate.TEMPLATE_WORD_VARIABLES.CPF_REPRESENTANTE,
-						maskCpf.valueToString(cpfRepresentante));
+				fullPathDocumentTemplate = new StringBuilder(config.getDirectoryPath());
+
+				if (documentoRepresentante != null && !"".equals(documentoRepresentante)) {
+
+					String documentv1 = documentoRepresentante.replace(".", "").replace("/", "").replace("-", "")
+							.trim();
+
+					if (documentv1.length() > 11) {
+
+						maskCnpj.setValueContainsLiteralCharacters(false);
+						values.put(ReadWordTemplate.TEMPLATE_WORD_VARIABLES.CNPJ_REPRESENTANTE,
+								maskCnpj.valueToString(documentv1));
+
+						fullPathDocumentTemplate.append(config.getTemplateJuridica());
+
+					} else {
+
+						maskCpf.setValueContainsLiteralCharacters(false);
+						values.put(ReadWordTemplate.TEMPLATE_WORD_VARIABLES.CPF_REPRESENTANTE,
+								maskCpf.valueToString(documentv1));
+
+						fullPathDocumentTemplate.append(config.getTemplateFisica());
+
+					}
+
+				}
 
 				String nomeRepresentante = getStringOfXPath(tableOfCondominio,
 						"/html/body/form/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td[3]/div[1]/div[2]/table/tbody/tr[1]/td/div/div/table/tbody/tr[3]/td[2]/div/table/tbody/tr/td/div/table/tbody/tr[10]/td[5]");
-				values.put(ReadWordTemplate.TEMPLATE_WORD_VARIABLES.NOME_REPRESENTANTE, nomeRepresentante);
+
+				String nomeRepresentantev1 = nomeRepresentante.replace("/", "").trim();
+
+				values.put(ReadWordTemplate.TEMPLATE_WORD_VARIABLES.NOME_REPRESENTANTE, nomeRepresentantev1);
 
 				Select select = new Select(driver.findElement(By.id("ctl00_PageContent_TxAdesao")));
 				String parcelas = select.getFirstSelectedOption().getText();
@@ -178,21 +234,21 @@ public class WebScrapping {
 					parcelas = select.getFirstSelectedOption().getText().substring(0, 1);
 				}
 				values.put(ReadWordTemplate.TEMPLATE_WORD_VARIABLES.PARCELAS, parcelas);
-				
+
 				String cpfProprietario = getStringOfXPath(tableOfCondominio,
 						"/html/body/form/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td[3]/div[1]/div[2]/table/tbody/tr[1]/td/div/div/table/tbody/tr[3]/td[2]/div/table/tbody/tr/td/div/table/tbody/tr[15]/td[2]");
 				values.put(ReadWordTemplate.TEMPLATE_WORD_VARIABLES.CPF_PROPRIETARIO,
 						maskCpf.valueToString(cpfProprietario));
-				
+
 				String nomeProprietario = getStringOfXPath(tableOfCondominio,
 						"/html/body/form/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td[3]/div[1]/div[2]/table/tbody/tr[1]/td/div/div/table/tbody/tr[3]/td[2]/div/table/tbody/tr/td/div/table/tbody/tr[15]/td[5]");
 				values.put(ReadWordTemplate.TEMPLATE_WORD_VARIABLES.NOME_PROPRIETARIO, nomeProprietario);
-				
+
 				String unidade = getStringOfXPath(tableOfCondominio,
 						"/html/body/form/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td[3]/div[1]/div[2]/table/tbody/tr[1]/td/div/div/table/tbody/tr[3]/td[2]/div/table/tbody/tr/td/div/table/tbody/tr[17]/td[2]");
 				values.put(ReadWordTemplate.TEMPLATE_WORD_VARIABLES.UNIDADE, unidade);
-				
-				fillDocument(values);
+
+				fillDocument(values, outputDirectory, fullPathDocumentTemplate.toString());
 			}
 			Thread.sleep(1000);
 
@@ -207,9 +263,9 @@ public class WebScrapping {
 			System.exit(0);
 
 		} catch (Exception e) {
-			
-			logger.error("Erro: [" + e +"]");
-			
+
+			logger.error("Erro: [" + e + "]");
+
 			driver.close();
 			driver.quit();
 			e.printStackTrace();
@@ -241,8 +297,12 @@ public class WebScrapping {
 		return element.findElement(By.id(id)).getText();
 	}
 
-	private void fillDocument(Map<ReadWordTemplate.TEMPLATE_WORD_VARIABLES, String> values) throws Exception {
+	private void fillDocument(Map<ReadWordTemplate.TEMPLATE_WORD_VARIABLES, String> values, String outputDirectory,
+			String template) throws Exception {
 		read.setValues(values);
+		read.setOutPutDirectory(outputDirectory);
+		read.setDocumentTemplate(template);
+
 		read.init();
 	}
 

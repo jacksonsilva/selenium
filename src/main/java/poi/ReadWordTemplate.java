@@ -18,19 +18,18 @@ import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import config.AppConfig;
-import config.model.Config;
-
 public class ReadWordTemplate {
 
 	private Logger logger = LoggerFactory.getLogger(ReadWordTemplate.class);
 	
 	public enum TEMPLATE_WORD_VARIABLES {
-		RAZAO_SOCIAL, CNPJ, ENDERECO_CONDOMINIO, NOME_REPRESENTANTE, CPF_REPRESENTANTE, PARCELAS, UNIDADE,
+		RAZAO_SOCIAL, CNPJ, ENDERECO_CONDOMINIO, NOME_REPRESENTANTE, CPF_REPRESENTANTE, CNPJ_REPRESENTANTE, PARCELAS, UNIDADE,
 		NOME_PROPRIETARIO, CPF_PROPRIETARIO
 	}
 
 	private Map<TEMPLATE_WORD_VARIABLES, String> values;
+	private String documentTemplate;
+	private String outPutDirectory;
 
 	public static void main(String[] args) throws Exception {
 
@@ -52,21 +51,24 @@ public class ReadWordTemplate {
 			values.put(TEMPLATE_WORD_VARIABLES.CPF_PROPRIETARIO, "11111111111");
 			*/
 
-			if (values == null) {
-				throw new Exception("Valores das variáveis não foram preenchidos");
+			if (values == null && (documentTemplate == null || "".equals(documentTemplate)) && 
+					(outPutDirectory == null || "".equals(outPutDirectory))) {
+				throw new Exception("Valores das variáveis não foram preenchidos e/ou Template do documento não encontrado!");
 			}
 
 			SimpleDateFormat sdfTimer = new SimpleDateFormat("HH:mm:ss");
 			System.out.println("Inicio - " + sdfTimer.format(new Date()));
 
-			File fileConfig = new File("./config.xml");
+			//File fileConfig = new File("./config.xml");
 
-			AppConfig appConfig = new AppConfig(new FileInputStream(fileConfig));
+			///AppConfig appConfig = new AppConfig(new FileInputStream(fileConfig));
 			// AppConfig appConfig = new
 			// AppConfig(ReadWordTemplate.class.getResourceAsStream("config.xml"));
-			Config config = appConfig.getConfig();
-
-			File file = new File(config.getDirectoryPath() + config.getFileName());
+			//Config config = appConfig.getConfig();
+			
+			//File file = new File(config.getDirectoryPath() + config.getTemplateFisica());
+			
+			File file = new File(documentTemplate);
 			XWPFDocument document = new XWPFDocument(new FileInputStream(file));
 			List<XWPFParagraph> paragraphs = document.getParagraphs();
 
@@ -75,8 +77,12 @@ public class ReadWordTemplate {
 			replacedElementsMap.put("\\{CNPJ_MF_CONDOMINIO\\}", values.get(TEMPLATE_WORD_VARIABLES.CNPJ));
 			replacedElementsMap.put("\\{ENDERECO_CONDOMINIO\\}",
 					values.get(TEMPLATE_WORD_VARIABLES.ENDERECO_CONDOMINIO));
+			
 			replacedElementsMap.put("\\{NOME_REPRESENTANTE\\}", values.get(TEMPLATE_WORD_VARIABLES.NOME_REPRESENTANTE));
 			replacedElementsMap.put("\\{CPF_REPRESENTANTE\\}", values.get(TEMPLATE_WORD_VARIABLES.CPF_REPRESENTANTE));
+			replacedElementsMap.put("\\{CNPJ_REPRESENTANTE\\}", values.get(TEMPLATE_WORD_VARIABLES.CNPJ_REPRESENTANTE));
+			
+			
 			String parcelas = values.get(TEMPLATE_WORD_VARIABLES.PARCELAS);
 			replacedElementsMap.put("\\{PARCELAS\\}", parcelas);
 			if (parcelas != null) {
@@ -138,7 +144,7 @@ public class ReadWordTemplate {
 			SimpleDateFormat sdfDataFileName = new SimpleDateFormat("ddMMyyyy");
 			String dataFileName = sdfDataFileName.format(new Date());
 
-			StringBuilder newName = new StringBuilder(config.getOutputDirectory()).append(dataFileName).append("_")
+			StringBuilder newName = new StringBuilder(outPutDirectory).append(dataFileName).append("_")
 					.append(replacedElementsMap.get("\\{RAZAO_SOCIAL_CONDOMINIO\\}")).append(".docx");
 
 			File copied = new File(newName.toString());
@@ -183,4 +189,20 @@ public class ReadWordTemplate {
 		this.values = values;
 	}
 
+	public String getDocumentTemplate() {
+		return documentTemplate;
+	}
+
+	public void setDocumentTemplate(String documentTemplate) {
+		this.documentTemplate = documentTemplate;
+	}
+
+	public String getOutPutDirectory() {
+		return outPutDirectory;
+	}
+
+	public void setOutPutDirectory(String outPutDirectory) {
+		this.outPutDirectory = outPutDirectory;
+	}
+	
 }
