@@ -1,10 +1,14 @@
 package webscrapping;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -17,6 +21,7 @@ import javax.swing.JOptionPane;
 import javax.swing.text.MaskFormatter;
 import javax.xml.stream.XMLStreamException;
 
+import org.apache.commons.lang.StringUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.PageLoadStrategy;
@@ -26,7 +31,6 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +55,33 @@ public class WebScrapping {
 
 		try {
 			// opt.addArguments("--disable-gpu");
+			
+			
+			List<Integer> pids = new ArrayList<Integer>();
+
+			try {
+
+				String out;
+				Process p = Runtime.getRuntime().exec("tasklist /FI \"IMAGENAME eq chromedriver.exe*\"");
+				BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
+
+				while ((out = input.readLine()) != null) {
+					if (out.length() > 36) {
+						String processPID = out.substring(27, 35).trim();
+						
+						//String[] items = out.split(" ");
+						//if (processPID.length > 1 && StringUtils.isNumeric(processPID)) {
+						if (StringUtils.isNumeric(processPID)) {
+							//pids.add(NumberUtils.toInt(processPID));
+							Runtime.getRuntime().exec("taskkill /F /PID " + processPID);
+						}
+					}
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
 
 			config = readConfigFile();
 			// Initialize browser
@@ -91,7 +122,7 @@ public class WebScrapping {
 		try {
 
 			MaskFormatter maskCpf = new MaskFormatter("###.###.###-##");
-			MaskFormatter maskCnpj = new MaskFormatter("###.###.###/####-##");
+			MaskFormatter maskCnpj = new MaskFormatter("0##.###.###/####-##");
 
 			// Config config = readConfigFile();
 			outputDirectory = config.getOutputDirectory();
@@ -108,8 +139,8 @@ public class WebScrapping {
 			WebElement password = getWebElementOfId("ctl00_PageContent_Password");
 			WebElement buttonOkToLogin = getWebElementOfId("ctl00_PageContent_OKButton__Button");
 
-			username.sendKeys("usuario");
-			password.sendKeys("password");
+			username.sendKeys("xxx");
+			password.sendKeys("xxx");
 
 			buttonOkToLogin.click();
 
@@ -169,49 +200,57 @@ public class WebScrapping {
 				WebElement tableOfCondominio = getWebElementOfId("ctl00_PageContent_PropostasRecordControlPanel");
 
 				String cnpj = getStringOfXPath(tableOfCondominio,
-						"/html/body/form/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td[3]/div[1]/div[2]/table/tbody/tr[1]/td/div/div/table/tbody/tr[3]/td[2]/div/table/tbody/tr/td/div/table/tbody/tr[4]/td[2]");
+						"/html/body/form/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td[3]/div[1]/div[2]/table/tbody/tr[1]/td/div/div/table/tbody/tr[3]/td[2]/div/table/tbody/tr/td/div/table/tbody/tr[8]/td[2]");
+						
 
 				maskCnpj.setValueContainsLiteralCharacters(false);
 				values.put(ReadWordTemplate.TEMPLATE_WORD_VARIABLES.CNPJ, maskCnpj.valueToString(cnpj));
 
 				String razaoSocial = getStringOfXPath(tableOfCondominio,
-						"/html/body/form/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td[3]/div[1]/div[2]/table/tbody/tr[1]/td/div/div/table/tbody/tr[3]/td[2]/div/table/tbody/tr/td/div/table/tbody/tr[4]/td[5]");
+						"/html/body/form/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td[3]/div[1]/div[2]/table/tbody/tr[1]/td/div/div/table/tbody/tr[3]/td[2]/div/table/tbody/tr/td/div/table/tbody/tr[8]/td[5]");
+
 				values.put(ReadWordTemplate.TEMPLATE_WORD_VARIABLES.RAZAO_SOCIAL, razaoSocial);
 
 				String enderecoCondominio = getStringOfXPath(tableOfCondominio,
-						"/html/body/form/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td[3]/div[1]/div[2]/table/tbody/tr[1]/td/div/div/table/tbody/tr[3]/td[2]/div/table/tbody/tr/td/div/table/tbody/tr[5]/td[5]");
+						"/html/body/form/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td[3]/div[1]/div[2]/table/tbody/tr[1]/td/div/div/table/tbody/tr[3]/td[2]/div/table/tbody/tr/td/div/table/tbody/tr[9]/td[5]");
+						
 				String bairroCondominio = getStringOfXPath(tableOfCondominio,
-						"/html/body/form/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td[3]/div[1]/div[2]/table/tbody/tr[1]/td/div/div/table/tbody/tr[3]/td[2]/div/table/tbody/tr/td/div/table/tbody/tr[6]/td[2]");
+						"/html/body/form/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td[3]/div[1]/div[2]/table/tbody/tr[1]/td/div/div/table/tbody/tr[3]/td[2]/div/table/tbody/tr/td/div/table/tbody/tr[10]/td[2]");
+				
 				String ufCondominio = getStringOfXPath(tableOfCondominio,
-						"/html/body/form/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td[3]/div[1]/div[2]/table/tbody/tr[1]/td/div/div/table/tbody/tr[3]/td[2]/div/table/tbody/tr/td/div/table/tbody/tr[6]/td[8]");
+						"/html/body/form/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td[3]/div[1]/div[2]/table/tbody/tr[1]/td/div/div/table/tbody/tr[3]/td[2]/div/table/tbody/tr/td/div/table/tbody/tr[10]/td[8]");
 
 				String fullAddress = new StringBuilder().append(enderecoCondominio).append(" ").append(bairroCondominio)
 						.append(" ").append(ufCondominio).toString();
 				values.put(ReadWordTemplate.TEMPLATE_WORD_VARIABLES.ENDERECO_CONDOMINIO, fullAddress);
 
 				String documentoRepresentante = getStringOfXPath(tableOfCondominio,
-						"/html/body/form/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td[3]/div[1]/div[2]/table/tbody/tr[1]/td/div/div/table/tbody/tr[3]/td[2]/div/table/tbody/tr/td/div/table/tbody/tr[10]/td[2]");
+						"/html/body/form/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td[3]/div[1]/div[2]/table/tbody/tr[1]/td/div/div/table/tbody/tr[3]/td[2]/div/table/tbody/tr/td/div/table/tbody/tr[15]/td[2]");
+						
 
 				fullPathDocumentTemplate = new StringBuilder(config.getDirectoryPath());
 
 				if (documentoRepresentante != null && !"".equals(documentoRepresentante)) {
 
-					String documentv1 = documentoRepresentante.replace(".", "").replace("/", "").replace("-", "")
-							.trim();
+					String documentv1 = documentoRepresentante.replace(".", "").replace("/", "").replace("-", "").trim();
 
 					if (documentv1.length() > 11) {
+						
+						String documentFinal = StringUtils.leftPad(documentv1, 14, '0');
 
 						maskCnpj.setValueContainsLiteralCharacters(false);
 						values.put(ReadWordTemplate.TEMPLATE_WORD_VARIABLES.CNPJ_REPRESENTANTE,
-								maskCnpj.valueToString(documentv1));
+								maskCnpj.valueToString(documentFinal));
 
 						fullPathDocumentTemplate.append(config.getTemplateJuridica());
 
 					} else {
 
+						String documentFinal = StringUtils.leftPad(documentv1, 11, '0');
+						
 						maskCpf.setValueContainsLiteralCharacters(false);
 						values.put(ReadWordTemplate.TEMPLATE_WORD_VARIABLES.CPF_REPRESENTANTE,
-								maskCpf.valueToString(documentv1));
+								maskCpf.valueToString(documentFinal));
 
 						fullPathDocumentTemplate.append(config.getTemplateFisica());
 
@@ -220,32 +259,37 @@ public class WebScrapping {
 				}
 
 				String nomeRepresentante = getStringOfXPath(tableOfCondominio,
-						"/html/body/form/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td[3]/div[1]/div[2]/table/tbody/tr[1]/td/div/div/table/tbody/tr[3]/td[2]/div/table/tbody/tr/td/div/table/tbody/tr[10]/td[5]");
+						"/html/body/form/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td[3]/div[1]/div[2]/table/tbody/tr[1]/td/div/div/table/tbody/tr[3]/td[2]/div/table/tbody/tr/td/div/table/tbody/tr[15]/td[5]");
 
 				String nomeRepresentantev1 = nomeRepresentante.replace("/", "").trim();
 
 				values.put(ReadWordTemplate.TEMPLATE_WORD_VARIABLES.NOME_REPRESENTANTE, nomeRepresentantev1);
 
-				Select select = new Select(driver.findElement(By.id("ctl00_PageContent_TxAdesao")));
-				String parcelas = select.getFirstSelectedOption().getText();
+
+				//Select select = new Select(driver.findElement(By.id("ctl00_PageContent_TxAdesao")));
+				//String parcelas = select.getFirstSelectedOption().getText();
+				String parcelas = getStringOfXPath(tableOfCondominio,
+						"/html/body/form/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td[3]/div[1]/div[2]/table/tbody/tr[1]/td/div/div/table/tbody/tr[3]/td[2]/div/table/tbody/tr/td/div/table/tbody/tr[21]/td[7]");
 				if (parcelas != null && parcelas.trim().equalsIgnoreCase("A VISTA")) {
 					parcelas = "1";
-				} else {
-					parcelas = select.getFirstSelectedOption().getText().substring(0, 1);
-				}
+				} /*
+					 * else { parcelas = select.getFirstSelectedOption().getText().substring(0, 1);
+					 * }
+					 */
+				
 				values.put(ReadWordTemplate.TEMPLATE_WORD_VARIABLES.PARCELAS, parcelas);
 
 				String cpfProprietario = getStringOfXPath(tableOfCondominio,
-						"/html/body/form/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td[3]/div[1]/div[2]/table/tbody/tr[1]/td/div/div/table/tbody/tr[3]/td[2]/div/table/tbody/tr/td/div/table/tbody/tr[15]/td[2]");
+						"/html/body/form/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td[3]/div[1]/div[2]/table/tbody/tr[1]/td/div/div/table/tbody/tr[3]/td[2]/div/table/tbody/tr/td/div/table/tbody/tr[19]/td[2]");
 				values.put(ReadWordTemplate.TEMPLATE_WORD_VARIABLES.CPF_PROPRIETARIO,
 						maskCpf.valueToString(cpfProprietario));
 
 				String nomeProprietario = getStringOfXPath(tableOfCondominio,
-						"/html/body/form/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td[3]/div[1]/div[2]/table/tbody/tr[1]/td/div/div/table/tbody/tr[3]/td[2]/div/table/tbody/tr/td/div/table/tbody/tr[15]/td[5]");
+						"/html/body/form/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td[3]/div[1]/div[2]/table/tbody/tr[1]/td/div/div/table/tbody/tr[3]/td[2]/div/table/tbody/tr/td/div/table/tbody/tr[19]/td[5]");
 				values.put(ReadWordTemplate.TEMPLATE_WORD_VARIABLES.NOME_PROPRIETARIO, nomeProprietario);
 
 				String unidade = getStringOfXPath(tableOfCondominio,
-						"/html/body/form/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td[3]/div[1]/div[2]/table/tbody/tr[1]/td/div/div/table/tbody/tr[3]/td[2]/div/table/tbody/tr/td/div/table/tbody/tr[17]/td[2]");
+						"/html/body/form/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td[3]/div[1]/div[2]/table/tbody/tr[1]/td/div/div/table/tbody/tr[3]/td[2]/div/table/tbody/tr/td/div/table/tbody/tr[21]/td[2]");
 				values.put(ReadWordTemplate.TEMPLATE_WORD_VARIABLES.UNIDADE, unidade);
 
 				fillDocument(values, outputDirectory, fullPathDocumentTemplate.toString());

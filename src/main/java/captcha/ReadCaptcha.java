@@ -307,6 +307,7 @@ public class ReadCaptcha {
 				FileHandler.copy(srcCaptcha, this.fileOriginCaptcha);
 
 				String resulCaptcha = solveCaptach();
+				//String resulCaptcha ="";
 				captcha.sendKeys(resulCaptcha);
 				btnEnviarConsulta.click();
 
@@ -424,7 +425,7 @@ public class ReadCaptcha {
 			service.setImage(fileOriginCaptcha);
 			service.setApiKey(apiKey);
 			service.setMethod(methodBase64);
-			service.setTextinstructions(instructionCaptcha);
+			service.setTextinstructions("Enter the code from above");
 			service.setPhrase("1");
 
 			int tipoNumerico = typeOfCaptcha(instructionCaptcha);

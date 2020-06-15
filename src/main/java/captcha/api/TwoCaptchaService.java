@@ -74,6 +74,7 @@ public class TwoCaptchaService {
 	private String textinstructions;
 	private String phrase;
 	private int numeric;
+	private int regSense;
 	private int calc;
 	private int softId;
 
@@ -374,4 +375,12 @@ public class TwoCaptchaService {
 		this.softId = softId;
 	}
 
+	public int getRegSense() {
+		return regSense;
+	}
+
+	public void setRegSense(int regSense) {
+		this.regSense = regSense;
+	}
+	
 }

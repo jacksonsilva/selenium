@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config version="1.0">
+	<chrome_drive>C:\rb_process\chromedriver.exe</chrome_drive>
+    <directory_path>C:\rb_process\template</directory_path>
+    <templateJuridica>421_contrato_template_juridica_v1.docx</templateJuridica>
+    <templateFisica>421_contrato_template_fisica_v1.docx</templateFisica>
+    <output_directory>C:\rb_process\finalizado\</output_directory>
+</config>

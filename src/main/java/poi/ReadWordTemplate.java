@@ -13,8 +13,6 @@ import org.apache.poi.xwpf.usermodel.IBodyElement;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
-import org.apache.poi.xwpf.usermodel.XWPFTable;
-import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -118,26 +116,17 @@ public class ReadWordTemplate {
 						}
 					}
 				break;
-				case "TABLE":
-					List<XWPFTable> tableList = body.getBody().getTables();
-					for (XWPFTable table : tableList) {
-						if (table.getRows().size() > 1) {
-							for (XWPFTableCell cell : table.getRow(1).getTableCells()) {
-								for (XWPFParagraph p : cell.getParagraphs()) {
-									for (XWPFRun r : p.getRuns()) {
-										String text = r.getText(r.getTextPosition());
-										for (Map.Entry<String, String> entry : replacedElementsMap.entrySet()) {
-											if (text != null && text.contains(entry.getKey().replace("\\", ""))) {
-												text = text.replaceAll(entry.getKey(), entry.getValue());
-											}
-										}
-										r.setText(text, 0);
-									}
-								}
-							}
-						}
-					}
-					break;
+			/*
+			 * case "TABLE": List<XWPFTable> tableList = body.getBody().getTables(); for
+			 * (XWPFTable table : tableList) { if (table.getRows().size() > 1) { for
+			 * (XWPFTableCell cell : table.getRow(1).getTableCells()) { for (XWPFParagraph p
+			 * : cell.getParagraphs()) { for (XWPFRun r : p.getRuns()) { String text =
+			 * r.getText(r.getTextPosition()); for (Map.Entry<String, String> entry :
+			 * replacedElementsMap.entrySet()) { if (text != null &&
+			 * text.contains(entry.getKey().replace("\\", ""))) { text =
+			 * text.replaceAll(entry.getKey(), entry.getValue()); } } r.setText(text, 0); }
+			 * } } } } break;
+			 */
 				}
 			}
 
@@ -147,6 +136,18 @@ public class ReadWordTemplate {
 			StringBuilder newName = new StringBuilder(outPutDirectory).append(dataFileName).append("_")
 					.append(replacedElementsMap.get("\\{RAZAO_SOCIAL_CONDOMINIO\\}")).append(".docx");
 
+			
+			/*FileOutputStream pdfOutput = new FileOutputStream(new File(newName.toString()));
+			PdfOptions options = PdfOptions.create();
+			PdfConverter.getInstance().convert(document, pdfOutput, options);*/
+		
+			/*PdfOptions options = PdfOptions.create();
+			OutputStream out = new FileOutputStream(new File(newName.toString()));
+			PdfConverter.getInstance().convert(document, out, options);
+			*/
+			
+			
+			//Exportando em arquivo doc
 			File copied = new File(newName.toString());
 			XWPFDocument documentTmp = document;
 			FileOutputStream out = new FileOutputStream(copied);
