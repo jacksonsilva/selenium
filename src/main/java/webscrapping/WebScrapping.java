@@ -23,6 +23,7 @@ import javax.xml.stream.XMLStreamException;
 
 import org.apache.commons.lang.StringUtils;
 import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.TakesScreenshot;
@@ -139,7 +140,7 @@ public class WebScrapping {
 			WebElement password = getWebElementOfId("ctl00_PageContent_Password");
 			WebElement buttonOkToLogin = getWebElementOfId("ctl00_PageContent_OKButton__Button");
 
-			username.sendKeys("xxx");
+			username.sendKeys("xx");
 			password.sendKeys("xxx");
 
 			buttonOkToLogin.click();
@@ -158,7 +159,13 @@ public class WebScrapping {
 			String urlPesquisaContato = "http://" + ipFinal + "/Comercial/PesquisaContato.aspx";
 			driver.navigate().to(urlPesquisaContato);
 			this.wait = new WebDriverWait(driver, Duration.ofSeconds(WAIT_DEFAULT));
-
+			
+			//*[@id="ctl00_PageContent_Pagination__PageSize"]
+			WebElement paginas = getWebElementOfId("ctl00_PageContent_Pagination__PageSize");
+			paginas.sendKeys("10000");
+			paginas.sendKeys(Keys.ENTER);
+			Thread.sleep(2000);
+			
 			WebElement buttonIr = getWebElementOfId("ctl00_PageContent_SearchButton1__Button");
 			buttonIr.click();
 
